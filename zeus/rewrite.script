@@ -1,0 +1,43 @@
+#Zeus webserver version of basic GetSimple CMS rewrite rules
+map path into SCRATCH:path from %{URL}
+look for file at %{SCRATCH:path}
+if exists then goto END
+look for dir at %{SCRATCH:path}
+if exists then goto END
+
+#Ignore for Admin
+#Change below if you Admin in a different Directory
+match URL into $ with ^/admin.*$
+if matched then goto END
+
+
+match URL into $ with ^/plugins.*$
+if matched then goto END
+
+# see if its a page with a querystring
+
+RULE_0_START:
+# get the document root
+map path into SCRATCH:DOCROOT from /
+# initialize our variables
+set SCRATCH:ORIG_URL = %{URL}
+set SCRATCH:REQUEST_URI = %{URL}
+
+# see if theres any queries in our URL
+match URL into $ with ^(.*)\?(.*)$
+if matched then
+  set SCRATCH:REQUEST_URI = $1
+  set SCRATCH:QUERY_STRING = $2
+    set URL = /index.php?id=$1&$2
+    goto END
+endif
+RULE_0_END:
+
+# otherwise serve the page
+
+match URL into $ with /?([A-Za-z0-9-]+)/?$
+if matched
+set URL = /index.php?id=$1
+goto END
+endif
+
